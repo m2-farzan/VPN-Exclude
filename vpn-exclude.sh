@@ -62,14 +62,22 @@ else
 fi
 
 # Report errors if any
+ERROR=""
+
 echo $RESULT
 while IFS= read -r line; do
     if [[ ! -z `echo "$line" | grep -oP "^Error"` ]]; then
         ERROR_CAUSE=`echo "$line" | grep -oP "($RANGE_REGEX\b)|($IP_REGEX\b)|($DOMAIN_REGEX\b)"`
         if [[ ! -z $ERROR_CAUSE ]]; then
-            zenity --notification --text "VPN-EXCLUDE\nWarning: Couldn't handle $ERROR_CAUSE"
+            ERROR="${ERROR} $ERROR_CAUSE"
         else
-            zenity --notification --text "VPN-EXCLUDE\nError: $line"
+            ERROR="${ERROR}\nError: $line"
         fi
     fi
 done <<< "$RESULT"
+
+if [[ ! -z "${ERROR}" ]]; then
+    notify-send "VPN Exclude | Failed Domains:" "${ERROR}"
+else
+    notify-send --hint int:transient:1 "VPN Exclude" "Routes were applied." --expire-time=3000
+fi
